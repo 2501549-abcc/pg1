@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
     deleteBtn.textContent = "削除";
 
     deleteBtn.addEventListener("click", () => {
-      // 配列から消す（IDで消すから安全）
+      // 配列から消す
       const index = tasks.findIndex(t => t.id === task.id);
       if (index !== -1) tasks.splice(index, 1);
 
