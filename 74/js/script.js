@@ -1,50 +1,70 @@
-// ページ読み込み時：保存済みタスクを表示
-window.onload = function () {
-  const savedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
-  savedTasks.forEach(function (taskText) {
-    createTask(taskText);
-  });
-};
+document.addEventListener("DOMContentLoaded", () => {
+  const taskForm = document.getElementById("task-form");
+  const taskInput = document.getElementById("task-text");
+  const taskList  = document.getElementById("task-list");
 
-// 追加ボタン
-document.getElementById("add-task").addEventListener("click", function () {
-  const taskText = document.getElementById("task-text").value;
-  if (taskText) {
-    createTask(taskText);
-    saveTask(taskText);
-    document.getElementById("task-text").value = "";
+  // 起動時に読み込み
+  let tasks = loadTasks();
+  renderTasks(tasks);
+
+  // 追加（submitなのでEnterもOK）
+  taskForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const text = taskInput.value.trim();
+    if (!text) return;
+
+    const newTask = createTaskObject(text);
+    tasks.push(newTask);
+    saveTasks(tasks);
+
+    addTaskToDOM(newTask);
+    taskInput.value = "";
+  });
+
+  function createTaskObject(text) {
+    return {
+      id: crypto.randomUUID(), // ユニークID（同名タスクでも安全）
+      text
+    };
+  }
+
+  function loadTasks() {
+    return JSON.parse(localStorage.getItem("tasks")) || [];
+  }
+
+  function saveTasks(tasks) {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+  }
+
+  function renderTasks(tasks) {
+    taskList.innerHTML = "";
+    tasks.forEach(addTaskToDOM);
+  }
+
+  function addTaskToDOM(task) {
+    const li = document.createElement("li");
+    li.dataset.id = task.id;
+
+    const span = document.createElement("span");
+    span.textContent = task.text;
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.textContent = "削除";
+
+    deleteBtn.addEventListener("click", () => {
+      // 配列から消す（IDで消すから安全）
+      const index = tasks.findIndex(t => t.id === task.id);
+      if (index !== -1) tasks.splice(index, 1);
+
+      saveTasks(tasks);
+
+      // DOMから消す
+      li.remove();
+    });
+
+    li.append(span, deleteBtn);
+    taskList.appendChild(li);
   }
 });
-
-// タスク作成（削除ボタン付き）
-function createTask(taskText) {
-  const taskList = document.getElementById("task-list");
-  const taskItem = document.createElement("li");
-
-  taskItem.textContent = taskText + " ";
-
-  const deleteButton = document.createElement("button");
-  deleteButton.textContent = "削除";
-
-  deleteButton.addEventListener("click", function () {
-    deleteTask(taskText);
-    taskList.removeChild(taskItem);
-  });
-
-  taskItem.appendChild(deleteButton);
-  taskList.appendChild(taskItem);
-}
-
-// 保存
-function saveTask(taskText) {
-  const savedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
-  savedTasks.push(taskText);
-  localStorage.setItem("tasks", JSON.stringify(savedTasks));
-}
-
-// 削除
-function deleteTask(taskText) {
-  const savedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
-  const updatedTasks = savedTasks.filter(task => task !== taskText);
-  localStorage.setItem("tasks", JSON.stringify(updatedTasks));
-}
